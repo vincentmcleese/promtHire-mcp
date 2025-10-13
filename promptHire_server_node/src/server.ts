@@ -1,5 +1,8 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { URL } from "node:url";
+import { readFileSync } from "node:fs";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
@@ -40,17 +43,29 @@ function widgetMeta(widget: PromptHireWidget) {
   } as const;
 }
 
+// Load the inlined HTML bundle (no external hosting needed!)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const htmlPath = join(__dirname, "../../assets/prompthire-gig-2d2b.html");
+const inlinedHtml = readFileSync(htmlPath, "utf-8");
+
+// Extract the <style> tag from <head> and the body content
+const styleMatch = inlinedHtml.match(/<style>([\s\S]*?)<\/style>/);
+const bodyMatch = inlinedHtml.match(/<body>([\s\S]*)<\/body>/);
+
+const styles = styleMatch ? styleMatch[0] : ""; // Keep full <style>...</style>
+const body = bodyMatch ? bodyMatch[1].trim() : "";
+
+// Combine styles + body for the complete widget HTML
+const bodyContent = styles + "\n" + body;
+
 const widget: PromptHireWidget = {
   id: "create-new-gig",
   title: "Create Freelance Gig",
   templateUri: "ui://widget/prompthire-gig.html",
   invoking: "Creating your gig posting...",
   invoked: "Gig created successfully",
-  html: `
-<div id="prompthire-gig-root"></div>
-<link rel="stylesheet" href="https://persistent.oaistatic.com/ecosystem-built-assets/prompthire-gig-2d2b.css">
-<script type="module" src="https://persistent.oaistatic.com/ecosystem-built-assets/prompthire-gig-2d2b.js"></script>
-  `.trim(),
+  html: bodyContent, // Self-contained HTML with inlined CSS/JS
   responseText: "Created your freelance gig posting!"
 };
 

@@ -1,13 +1,18 @@
-import React from "react";
-import { Briefcase, Clock, DollarSign, CheckCircle } from "lucide-react";
+import React, { useState } from "react";
+import { Briefcase, Clock, DollarSign, CheckCircle, X } from "lucide-react";
 
 export default function GigCard({
-  gig_title = "Untitled Gig",
-  gig_description = "No description provided",
-  timeline = "TBD",
-  budget = "TBD",
-  skills_required = []
+  data = {
+    gig_title: "Untitled Gig",
+    gig_description: "No description provided",
+    timeline: "TBD",
+    budget: "TBD",
+    skills_required: []
+  },
+  setData = () => {}
 }) {
+  const { gig_title, gig_description, timeline, budget, skills_required } = data;
+  const [newSkill, setNewSkill] = useState("");
   return (
     <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
       {/* Header */}
@@ -17,17 +22,33 @@ export default function GigCard({
             <Briefcase className="h-6 w-6 text-blue-600" />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-xl font-semibold text-black truncate">
-              {gig_title}
-            </h2>
+            <input
+              type="text"
+              value={gig_title}
+              onChange={(e) => setData({ ...data, gig_title: e.target.value })}
+              className="text-xl font-semibold text-black w-full bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded px-2 -mx-2"
+              placeholder="Untitled Gig"
+            />
             <div className="flex items-center gap-4 mt-2 text-sm text-black/60">
               <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{timeline}</span>
+                <Clock className="h-4 w-4 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={timeline}
+                  onChange={(e) => setData({ ...data, timeline: e.target.value })}
+                  className="bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded px-1 -mx-1 min-w-0"
+                  placeholder="TBD"
+                />
               </div>
               <div className="flex items-center gap-1">
-                <DollarSign className="h-4 w-4" />
-                <span>{budget}</span>
+                <DollarSign className="h-4 w-4 flex-shrink-0" />
+                <input
+                  type="text"
+                  value={budget}
+                  onChange={(e) => setData({ ...data, budget: e.target.value })}
+                  className="bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded px-1 -mx-1 min-w-0"
+                  placeholder="TBD"
+                />
               </div>
             </div>
           </div>
@@ -36,27 +57,64 @@ export default function GigCard({
 
       {/* Description */}
       <div className="px-6 py-5">
-        <p className="text-sm text-black/80 whitespace-pre-wrap">
-          {gig_description}
-        </p>
+        <textarea
+          value={gig_description}
+          onChange={(e) => setData({ ...data, gig_description: e.target.value })}
+          className="text-sm text-black/80 whitespace-pre-wrap w-full bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 rounded px-2 -mx-2 resize-y min-h-[100px]"
+          placeholder="No description provided"
+        />
       </div>
 
       {/* Skills */}
-      {skills_required && skills_required.length > 0 && (
-        <div className="px-6 py-4 border-t border-black/5">
-          <div className="flex flex-wrap gap-2">
-            {skills_required.map((skill, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-sm text-black/70"
+      <div className="px-6 py-4 border-t border-black/5">
+        <div className="flex flex-wrap gap-2 mb-3">
+          {skills_required && skills_required.length > 0 && skills_required.map((skill, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-sm text-black/70 hover:bg-gray-200 transition-colors"
+            >
+              <CheckCircle className="h-3 w-3" />
+              {skill}
+              <button
+                onClick={() => {
+                  const newSkills = skills_required.filter((_, idx) => idx !== i);
+                  setData({ ...data, skills_required: newSkills });
+                }}
+                className="ml-1 hover:text-red-600 transition-colors"
+                aria-label="Remove skill"
               >
-                <CheckCircle className="h-3 w-3" />
-                {skill}
-              </span>
-            ))}
-          </div>
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
         </div>
-      )}
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newSkill}
+            onChange={(e) => setNewSkill(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && newSkill.trim()) {
+                setData({ ...data, skills_required: [...(skills_required || []), newSkill.trim()] });
+                setNewSkill("");
+              }
+            }}
+            className="flex-1 px-3 py-1.5 text-sm border border-black/10 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            placeholder="Add a skill (press Enter)"
+          />
+          <button
+            onClick={() => {
+              if (newSkill.trim()) {
+                setData({ ...data, skills_required: [...(skills_required || []), newSkill.trim()] });
+                setNewSkill("");
+              }
+            }}
+            className="px-4 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+          >
+            Add
+          </button>
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="px-6 py-4 border-t border-black/5 bg-gray-50">
