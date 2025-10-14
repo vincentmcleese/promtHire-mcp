@@ -4,16 +4,18 @@ import { useWidgetProps } from "../use-widget-props";
 import GigCard from "./GigCard";
 
 function App() {
-  const props = useWidgetProps({
-    gig_title: "Sample Freelance Gig",
-    gig_description: "This is a demo gig card",
-    timeline: "2 weeks",
-    budget: "$1000",
-    skills_required: ["React", "Tailwind"]
-  });
+  // useWidgetProps is reactive - automatically updates when window.openai.toolOutput changes
+  const props = useWidgetProps({});
 
-  // Local editable state (ephemeral, following todo.jsx:795 pattern)
+  // Local editable state for user modifications (separate from props)
   const [localGig, setLocalGig] = useState(props);
+
+  // Sync local state when props change (when ChatGPT provides data)
+  React.useEffect(() => {
+    if (props && Object.keys(props).length > 0) {
+      setLocalGig(props);
+    }
+  }, [props]);
 
   return (
     <div className="antialiased w-full p-4">
