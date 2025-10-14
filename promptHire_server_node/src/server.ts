@@ -78,7 +78,7 @@ const toolInputSchema = {
     },
     gig_description: {
       type: "string",
-      description: "COMPLETE description of the freelance work discussed in the ENTIRE conversation. Include all requirements, deliverables, technical details, and context mentioned throughout the conversation."
+      description: "COMPREHENSIVE description extracted from the ENTIRE conversation including: project scope, all technical requirements, specific deliverables, success criteria, quality standards, constraints, dependencies, and any other details critical for project success. Include context from all messages in the conversation."
     },
     timeline: {
       type: "string",
@@ -92,6 +92,20 @@ const toolInputSchema = {
       type: "array",
       items: { type: "string" },
       description: "List of skills or technologies needed for this gig based on the ENTIRE conversation (e.g., ['React', 'Node.js', 'API Design']). Extract all technical requirements mentioned."
+    },
+    category: {
+      type: "string",
+      enum: ["design", "development", "legal", "security", "office-admin", "marketing", "strategy", "education", "copywriting", "other"],
+      description: "Categorize the gig based on its primary focus: 'design' for UI/UX/graphic/visual design, 'development' for software/web/mobile/technical development, 'legal' for contracts/compliance/legal work, 'security' for cybersecurity/audits/penetration testing, 'office-admin' for administrative/data entry/scheduling tasks, 'marketing' for campaigns/SEO/advertising/growth, 'strategy' for business consulting/planning/advisory, 'education' for training/tutoring/course creation, 'copywriting' for content/technical/creative writing, 'other' for miscellaneous work not fitting other categories."
+    },
+    success_criteria: {
+      type: "array",
+      items: { type: "string" },
+      description: "List of specific, measurable success criteria or acceptance criteria mentioned in the conversation (e.g., 'All tests must pass', 'Design must be mobile-responsive', 'Report must include executive summary', 'Code review required before delivery'). Extract any explicit or implied quality standards and deliverable requirements."
+    },
+    email: {
+      type: "string",
+      description: "Optional email address for contact about this gig."
     }
   },
   required: ["gig_title", "gig_description"],
@@ -103,7 +117,10 @@ const toolInputParser = z.object({
   gig_description: z.string(),
   timeline: z.string().optional(),
   budget: z.string().optional(),
-  skills_required: z.array(z.string()).optional()
+  skills_required: z.array(z.string()).optional(),
+  category: z.enum(["design", "development", "legal", "security", "office-admin", "marketing", "strategy", "education", "copywriting", "other"]).optional(),
+  success_criteria: z.array(z.string()).optional(),
+  email: z.string().optional()
 });
 
 // Database types and functions
@@ -114,6 +131,9 @@ type SavedGig = {
   timeline: string;
   budget: string;
   skills_required: string[];
+  category: string;
+  success_criteria: string[];
+  email?: string;
   created_at: string;
   session_id: string;
 };
@@ -246,6 +266,9 @@ function createPromptHireServer(sessionId: string): Server {
         timeline: args.timeline || "To be discussed",
         budget: args.budget || "TBD",
         skills_required: args.skills_required || [],
+        category: args.category || "other",
+        success_criteria: args.success_criteria || [],
+        email: args.email,
         created_at: new Date().toISOString(),
         session_id: sessionId
       };
@@ -299,7 +322,10 @@ function createPromptHireServer(sessionId: string): Server {
           gig_description: args.gig_description,
           timeline: args.timeline || "To be discussed",
           budget: args.budget || "TBD",
-          skills_required: args.skills_required || []
+          skills_required: args.skills_required || [],
+          category: args.category || "other",
+          success_criteria: args.success_criteria || [],
+          email: args.email
         },
         _meta: widgetMeta(widget)
       };
