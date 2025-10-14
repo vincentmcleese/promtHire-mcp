@@ -1,6 +1,6 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { URL } from "node:url";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -106,13 +106,73 @@ const toolInputParser = z.object({
   skills_required: z.array(z.string()).optional()
 });
 
-const tools: Tool[] = [{
-  name: widget.id,
-  description: "Creates a freelance gig posting from the conversation. Use when user wants to turn discussed work into a formal gig listing. Trigger phrases: 'create a gig', 'create gig for', 'make this a freelance posting', etc.",
-  inputSchema: toolInputSchema,
-  title: widget.title,
-  _meta: widgetMeta(widget)
-}];
+// Database types and functions
+type SavedGig = {
+  id: string;
+  gig_title: string;
+  gig_description: string;
+  timeline: string;
+  budget: string;
+  skills_required: string[];
+  created_at: string;
+  session_id: string;
+};
+
+const DB_PATH = join(__dirname, "../data/saved-gigs.json");
+
+function ensureDataDir() {
+  const dataDir = dirname(DB_PATH);
+  if (!existsSync(dataDir)) {
+    mkdirSync(dataDir, { recursive: true });
+  }
+  if (!existsSync(DB_PATH)) {
+    writeFileSync(DB_PATH, "[]", "utf-8");
+  }
+}
+
+function loadGigs(): SavedGig[] {
+  try {
+    ensureDataDir();
+    const data = readFileSync(DB_PATH, "utf-8");
+    return JSON.parse(data);
+  } catch (error) {
+    console.error("Error loading gigs:", error);
+    return [];
+  }
+}
+
+function saveGig(gig: SavedGig): string {
+  try {
+    ensureDataDir();
+    const gigs = loadGigs();
+    gigs.push(gig);
+    writeFileSync(DB_PATH, JSON.stringify(gigs, null, 2), "utf-8");
+    return gig.id;
+  } catch (error) {
+    console.error("Error saving gig:", error);
+    throw new Error("Failed to save gig to database");
+  }
+}
+
+function generateGigId(): string {
+  return `gig_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
+const tools: Tool[] = [
+  {
+    name: widget.id,
+    description: "Creates a freelance gig posting from the conversation. Use when user wants to turn discussed work into a formal gig listing. Trigger phrases: 'create a gig', 'create gig for', 'make this a freelance posting', etc.",
+    inputSchema: toolInputSchema,
+    title: widget.title,
+    _meta: widgetMeta(widget)
+  },
+  {
+    name: "save-gig",
+    description: "Saves a gig posting to the database. Called from the widget when user clicks 'Save Gig' button.",
+    inputSchema: toolInputSchema,
+    title: "Save Gig to Database"
+  }
+];
 
 const resources: Resource[] = [{
   uri: widget.templateUri,
@@ -130,7 +190,7 @@ const resourceTemplates: ResourceTemplate[] = [{
   _meta: widgetMeta(widget)
 }];
 
-function createPromptHireServer(): Server {
+function createPromptHireServer(sessionId: string): Server {
   const server = new Server(
     {
       name: "prompthire-mcp-node",
@@ -174,28 +234,78 @@ function createPromptHireServer(): Server {
   }));
 
   server.setRequestHandler(CallToolRequestSchema, async (request: CallToolRequest) => {
-    if (request.params.name !== widget.id) {
-      throw new Error(`Unknown tool: ${request.params.name}`);
-    }
-
     const args = toolInputParser.parse(request.params.arguments ?? {});
 
-    return {
-      content: [
-        {
-          type: "text",
-          text: widget.responseText
-        }
-      ],
-      structuredContent: {
+    // Handle save-gig tool (called from widget button)
+    if (request.params.name === "save-gig") {
+      const gigId = generateGigId();
+      const savedGig: SavedGig = {
+        id: gigId,
         gig_title: args.gig_title,
         gig_description: args.gig_description,
         timeline: args.timeline || "To be discussed",
         budget: args.budget || "TBD",
-        skills_required: args.skills_required || []
-      },
-      _meta: widgetMeta(widget)
-    };
+        skills_required: args.skills_required || [],
+        created_at: new Date().toISOString(),
+        session_id: sessionId
+      };
+
+      try {
+        saveGig(savedGig);
+        console.log(`✅ Gig saved: ${gigId} (session: ${sessionId})`);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Gig "${args.gig_title}" saved successfully! ID: ${gigId}`
+            }
+          ],
+          structuredContent: {
+            success: true,
+            gigId,
+            saved: true,
+            timestamp: savedGig.created_at
+          }
+        };
+      } catch (error) {
+        console.error("❌ Failed to save gig:", error);
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Failed to save gig: ${error instanceof Error ? error.message : "Unknown error"}`
+            }
+          ],
+          structuredContent: {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown error"
+          }
+        };
+      }
+    }
+
+    // Handle create-new-gig tool (original widget creation)
+    if (request.params.name === widget.id) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: widget.responseText
+          }
+        ],
+        structuredContent: {
+          gig_title: args.gig_title,
+          gig_description: args.gig_description,
+          timeline: args.timeline || "To be discussed",
+          budget: args.budget || "TBD",
+          skills_required: args.skills_required || []
+        },
+        _meta: widgetMeta(widget)
+      };
+    }
+
+    throw new Error(`Unknown tool: ${request.params.name}`);
   });
 
   return server;
@@ -213,9 +323,9 @@ const postPath = "/mcp/messages";
 
 async function handleSseRequest(res: ServerResponse) {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  const server = createPromptHireServer();
   const transport = new SSEServerTransport(postPath, res);
   const sessionId = transport.sessionId;
+  const server = createPromptHireServer(sessionId);
 
   sessions.set(sessionId, { server, transport });
 
@@ -313,4 +423,5 @@ httpServer.listen(port, () => {
   console.log(`PromptHire MCP server listening on http://localhost:${port}`);
   console.log(`  SSE stream: GET http://localhost:${port}${ssePath}`);
   console.log(`  Message post endpoint: POST http://localhost:${port}${postPath}?sessionId=...`);
+  console.log(`  Database: ${DB_PATH}`);
 });

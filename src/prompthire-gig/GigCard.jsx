@@ -13,6 +13,37 @@ export default function GigCard({
 }) {
   const { gig_title, gig_description, timeline, budget, skills_required } = data;
   const [newSkill, setNewSkill] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
+
+  async function handleSaveGig() {
+    setSaving(true);
+    setSaveStatus(null);
+
+    try {
+      const result = await window.openai?.callTool("save-gig", {
+        gig_title: data.gig_title,
+        gig_description: data.gig_description,
+        timeline: data.timeline || "TBD",
+        budget: data.budget || "TBD",
+        skills_required: data.skills_required || []
+      });
+
+      console.log("✅ Gig saved successfully:", result);
+      setSaveStatus('success');
+
+      // Reset success message after 3 seconds
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (error) {
+      console.error("❌ Failed to save gig:", error);
+      setSaveStatus('error');
+
+      // Reset error message after 3 seconds
+      setTimeout(() => setSaveStatus(null), 3000);
+    } finally {
+      setSaving(false);
+    }
+  }
   return (
     <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
       {/* Header */}
@@ -120,9 +151,11 @@ export default function GigCard({
       <div className="px-6 py-4 border-t border-black/5 bg-gray-50">
         <button
           type="button"
-          className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800"
+          onClick={handleSaveGig}
+          disabled={saving}
+          className="w-full sm:w-auto cursor-pointer inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-          Post Gig
+          {saving ? "Saving..." : saveStatus === 'success' ? "✓ Saved!" : saveStatus === 'error' ? "✗ Failed" : "Save Gig"}
         </button>
       </div>
     </div>
