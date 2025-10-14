@@ -437,6 +437,34 @@ const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse
     return;
   }
 
+  // API endpoint to get gigs
+  if (req.method === "GET" && url.pathname === "/api/gigs") {
+    const category = url.searchParams.get("category");
+    let gigs = loadGigs();
+
+    // Filter by category if provided
+    if (category && category !== "all") {
+      gigs = gigs.filter(gig => gig.category === category);
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(gigs));
+    return;
+  }
+
+  // Serve the HTML page
+  if (req.method === "GET" && url.pathname === "/") {
+    const htmlFilePath = join(__dirname, "../public/index.html");
+    try {
+      const html = readFileSync(htmlFilePath, "utf-8");
+      res.writeHead(200, { "Content-Type": "text/html" });
+      res.end(html);
+    } catch (error) {
+      res.writeHead(404).end("Page not found");
+    }
+    return;
+  }
+
   res.writeHead(404).end("Not Found");
 });
 
