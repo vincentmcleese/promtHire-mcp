@@ -3,4 +3,4 @@ builder = "NIXPACKS"
 
 [deploy]
 startCommand = "cd promptHire_server_node && pnpm start"
-watchPaths = ["promptHire_server_node/**"]
+watchPaths = ["promptHire_server_node/**", "assets/**"]
