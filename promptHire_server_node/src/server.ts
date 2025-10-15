@@ -44,7 +44,7 @@ function widgetMeta(widget: PromptHireWidget) {
 }
 
 // Load the inlined HTML bundle (no external hosting needed!)
-// Widget includes fullscreen support and post-submission success UI
+// Widget includes fullscreen support, post-submission success UI, and centered layout
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const htmlPath = join(__dirname, "../../assets/prompthire-gig-2d2b.html");
