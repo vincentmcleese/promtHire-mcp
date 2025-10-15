@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   Briefcase, Clock, DollarSign, CheckCircle, X, Mail, Link2,
   Palette, Code, Scale, Shield, Inbox, TrendingUp,
-  Target, GraduationCap, PenTool, MoreHorizontal
+  Target, GraduationCap, PenTool, MoreHorizontal, ExternalLink
 } from "lucide-react";
 
 const CATEGORY_CONFIG = {
@@ -40,6 +40,7 @@ export default function GigCard({
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
+  const [saved, setSaved] = useState(false);
 
   function handleInitialSave() {
     setShowEmailInput(true);
@@ -65,13 +66,10 @@ export default function GigCard({
       console.log("✅ Gig saved successfully:", result);
       setSaveStatus('success');
 
-      // Reset success message after 3 seconds
+      // Show success view after brief delay
       setTimeout(() => {
-        setSaveStatus(null);
-        setShowEmailInput(false);
-        setEmail("");
-        setChatLink("");
-      }, 3000);
+        setSaved(true);
+      }, 800);
     } catch (error) {
       console.error("❌ Failed to save gig:", error);
       setSaveStatus('error');
@@ -82,6 +80,34 @@ export default function GigCard({
       setSaving(false);
     }
   }
+
+  // Success view after gig is saved
+  if (saved) {
+    return (
+      <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
+        <div className="px-8 py-12 text-center">
+          <div className="mb-6">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h2 className="text-2xl font-semibold text-black mb-2">Gig submitted!</h2>
+            <p className="text-sm text-black/60">Your freelance gig has been posted successfully.</p>
+          </div>
+          <a
+            href="https://prompthire-mcp-node-production.up.railway.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-blue-600 text-white px-6 py-3 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-all"
+          >
+            See gig
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Editable form view
   return (
     <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
       {/* Header */}
