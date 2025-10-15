@@ -106,6 +106,10 @@ const toolInputSchema = {
     email: {
       type: "string",
       description: "Optional email address for contact about this gig."
+    },
+    chat_link: {
+      type: "string",
+      description: "Optional ChatGPT share link for the conversation that created this gig (e.g., https://chatgpt.com/share/...)."
     }
   },
   required: ["gig_title", "gig_description"],
@@ -120,7 +124,8 @@ const toolInputParser = z.object({
   skills_required: z.array(z.string()).optional(),
   category: z.enum(["design", "development", "legal", "security", "office-admin", "marketing", "strategy", "education", "copywriting", "other"]).optional(),
   success_criteria: z.array(z.string()).optional(),
-  email: z.string().optional()
+  email: z.string().optional(),
+  chat_link: z.string().optional()
 });
 
 // Database types and functions
@@ -134,6 +139,7 @@ type SavedGig = {
   category: string;
   success_criteria: string[];
   email?: string;
+  chat_link?: string;
   created_at: string;
   session_id: string;
 };
@@ -269,6 +275,7 @@ function createPromptHireServer(sessionId: string): Server {
         category: args.category || "other",
         success_criteria: args.success_criteria || [],
         email: args.email,
+        chat_link: args.chat_link,
         created_at: new Date().toISOString(),
         session_id: sessionId
       };
@@ -325,7 +332,8 @@ function createPromptHireServer(sessionId: string): Server {
           skills_required: args.skills_required || [],
           category: args.category || "other",
           success_criteria: args.success_criteria || [],
-          email: args.email
+          email: args.email,
+          chat_link: args.chat_link
         },
         _meta: widgetMeta(widget)
       };

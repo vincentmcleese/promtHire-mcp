@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  Briefcase, Clock, DollarSign, CheckCircle, X, Mail,
+  Briefcase, Clock, DollarSign, CheckCircle, X, Mail, Link2,
   Palette, Code, Scale, Shield, Inbox, TrendingUp,
   Target, GraduationCap, PenTool, MoreHorizontal
 } from "lucide-react";
@@ -36,6 +36,7 @@ export default function GigCard({
   const [newSkill, setNewSkill] = useState("");
   const [newCriteria, setNewCriteria] = useState("");
   const [email, setEmail] = useState("");
+  const [chatLink, setChatLink] = useState("");
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState(null); // null | 'success' | 'error'
@@ -57,7 +58,8 @@ export default function GigCard({
         skills_required: data.skills_required || [],
         category: data.category || "other",
         success_criteria: data.success_criteria || [],
-        email: email || undefined
+        email: email || undefined,
+        chat_link: chatLink || undefined
       });
 
       console.log("✅ Gig saved successfully:", result);
@@ -68,6 +70,7 @@ export default function GigCard({
         setSaveStatus(null);
         setShowEmailInput(false);
         setEmail("");
+        setChatLink("");
       }, 3000);
     } catch (error) {
       console.error("❌ Failed to save gig:", error);
@@ -240,28 +243,52 @@ export default function GigCard({
 
       {/* Actions */}
       <div className="px-6 py-4 border-t border-black/5 bg-gray-50">
-        <div className="flex items-center justify-end gap-3">
-          {showEmailInput && (
-            <div className="flex-1 max-w-xs flex items-center gap-2 px-4 py-2 bg-white border border-black/10 rounded-full">
-              <Mail className="h-4 w-4 text-black/40" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 bg-transparent border-none focus:outline-none text-sm text-black"
-                placeholder="your@email.com"
-              />
+        {showEmailInput ? (
+          <div className="space-y-3">
+            <div className="flex gap-3">
+              <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-white border border-black/10 rounded-full">
+                <Mail className="h-4 w-4 text-black/40 flex-shrink-0" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 bg-transparent border-none focus:outline-none text-sm text-black"
+                  placeholder="your@email.com"
+                />
+              </div>
+              <div className="flex-1 flex items-center gap-2 px-4 py-2 bg-white border border-black/10 rounded-full">
+                <Link2 className="h-4 w-4 text-black/40 flex-shrink-0" />
+                <input
+                  type="url"
+                  value={chatLink}
+                  onChange={(e) => setChatLink(e.target.value)}
+                  className="flex-1 bg-transparent border-none focus:outline-none text-sm text-black"
+                  placeholder="ChatGPT share link (optional)"
+                />
+              </div>
             </div>
-          )}
-          <button
-            type="button"
-            onClick={showEmailInput ? handleConfirmSave : handleInitialSave}
-            disabled={saving || (showEmailInput && !email.trim())}
-            className="cursor-pointer inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-          >
-            {saving ? "Saving..." : saveStatus === 'success' ? "✓ Saved!" : saveStatus === 'error' ? "✗ Failed" : showEmailInput ? "Confirm" : "Save Gig"}
-          </button>
-        </div>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleConfirmSave}
+                disabled={saving || !email.trim()}
+                className="cursor-pointer inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {saving ? "Saving..." : saveStatus === 'success' ? "✓ Saved!" : saveStatus === 'error' ? "✗ Failed" : "Confirm"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={handleInitialSave}
+              className="cursor-pointer inline-flex items-center justify-center rounded-full bg-blue-600 text-white px-6 py-2.5 text-sm font-medium hover:bg-blue-700 active:bg-blue-800 transition-all"
+            >
+              Save Gig
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
