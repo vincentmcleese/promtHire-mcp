@@ -114,7 +114,7 @@ export default function GigCard({
   // Success view after gig is saved
   if (saved) {
     return (
-      <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative">
+      <div className={`w-full ${displayMode === "fullscreen" ? "max-w-4xl" : "max-w-2xl"} border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative`}>
         {/* Expand/Minimize Button */}
         <div className="absolute end-3 top-3 z-10">
           <button
@@ -154,7 +154,7 @@ export default function GigCard({
 
   // Editable form view
   return (
-    <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative">
+    <div className={`w-full ${displayMode === "fullscreen" ? "max-w-4xl" : "max-w-2xl"} border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative`}>
       {/* Expand/Minimize Button */}
       <div className="absolute end-3 top-3 z-10">
         <button

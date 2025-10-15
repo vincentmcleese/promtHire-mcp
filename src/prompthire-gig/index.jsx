@@ -23,7 +23,7 @@ function App() {
 
   return (
     <div
-      className="antialiased w-full p-4"
+      className="antialiased w-full p-4 flex justify-center"
       style={{
         maxHeight,
         height: displayMode === "fullscreen" ? maxHeight : undefined,
