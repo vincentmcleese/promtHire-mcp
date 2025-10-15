@@ -5,6 +5,34 @@ import {
   Target, GraduationCap, PenTool, MoreHorizontal, ExternalLink
 } from "lucide-react";
 
+const ExpandIcon = () => {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M4.33496 11C4.33496 10.6327 4.63273 10.335 5 10.335C5.36727 10.335 5.66504 10.6327 5.66504 11V14.335H9L9.13379 14.3486C9.43692 14.4106 9.66504 14.6786 9.66504 15C9.66504 15.3214 9.43692 15.5894 9.13379 15.6514L9 15.665H5C4.63273 15.665 4.33496 15.3673 4.33496 15V11ZM14.335 9V5.66504H11C10.6327 5.66504 10.335 5.36727 10.335 5C10.335 4.63273 10.6327 4.33496 11 4.33496H15L15.1338 4.34863C15.4369 4.41057 15.665 4.67857 15.665 5V9C15.665 9.36727 15.3673 9.66504 15 9.66504C14.6327 9.66504 14.335 9.36727 14.335 9Z" />
+    </svg>
+  );
+};
+
+const MinimizeIcon = () => {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M5.66504 9C5.66504 8.63273 5.36727 8.33496 5 8.33496C4.63273 8.33496 4.33496 8.63273 4.33496 9V13C4.33496 13.3673 4.63273 13.665 5 13.665H9C9.36727 13.665 9.66504 13.3673 9.66504 13C9.66504 12.6327 9.36727 12.335 9 12.335H5.66504V9ZM15 6.33496C15.3673 6.33496 15.665 6.63273 15.665 7V11C15.665 11.3673 15.3673 11.665 15 11.665C14.6327 11.665 14.335 11.3673 14.335 11V7.66504H11C10.6327 7.66504 10.335 7.36727 10.335 7C10.335 6.63273 10.6327 6.33496 11 6.33496H15Z" />
+    </svg>
+  );
+};
+
 const CATEGORY_CONFIG = {
   design: { icon: Palette, label: "Design", color: "text-purple-600", bg: "bg-purple-50" },
   development: { icon: Code, label: "Development", color: "text-blue-600", bg: "bg-blue-50" },
@@ -28,7 +56,9 @@ export default function GigCard({
     category: "other",
     success_criteria: []
   },
-  setData = () => {}
+  setData = () => {},
+  displayMode = null,
+  maxHeight = undefined
 }) {
   const { gig_title, gig_description, timeline, budget, skills_required, category = "other", success_criteria = [] } = data;
   const categoryConfig = CATEGORY_CONFIG[category] || CATEGORY_CONFIG.other;
@@ -84,7 +114,22 @@ export default function GigCard({
   // Success view after gig is saved
   if (saved) {
     return (
-      <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
+      <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative">
+        {/* Expand/Minimize Button */}
+        <div className="absolute end-3 top-3 z-10">
+          <button
+            onClick={() => {
+              if (displayMode === "fullscreen") {
+                window.webplus?.requestDisplayMode({ mode: "inline" });
+              } else {
+                window.webplus?.requestDisplayMode({ mode: "fullscreen" });
+              }
+            }}
+            className="aspect-square rounded-full p-2 bg-black/5 hover:bg-black/10 text-black backdrop-blur-lg transition-colors"
+          >
+            {displayMode === "fullscreen" ? <MinimizeIcon /> : <ExpandIcon />}
+          </button>
+        </div>
         <div className="px-8 py-12 text-center">
           <div className="mb-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
@@ -109,7 +154,22 @@ export default function GigCard({
 
   // Editable form view
   return (
-    <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm">
+    <div className="w-full max-w-2xl border border-black/10 rounded-2xl sm:rounded-3xl overflow-hidden bg-white shadow-sm relative">
+      {/* Expand/Minimize Button */}
+      <div className="absolute end-3 top-3 z-10">
+        <button
+          onClick={() => {
+            if (displayMode === "fullscreen") {
+              window.webplus?.requestDisplayMode({ mode: "inline" });
+            } else {
+              window.webplus?.requestDisplayMode({ mode: "fullscreen" });
+            }
+          }}
+          className="aspect-square rounded-full p-2 bg-black/5 hover:bg-black/10 text-black backdrop-blur-lg transition-colors"
+        >
+          {displayMode === "fullscreen" ? <MinimizeIcon /> : <ExpandIcon />}
+        </button>
+      </div>
       {/* Header */}
       <div className="px-6 py-5 border-b border-black/5">
         <div className="flex items-start gap-3">
